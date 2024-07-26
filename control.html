@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js"></script>
     <style>
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         video { width: 80vw; height: auto; }
@@ -11,7 +13,7 @@
     </style>
 </head>
 <body>
-    <video id="camera" autoplay></video>
+    <video id="camera" autoplay playsinline></video>
     <div>
         <button onclick="startRecording()">Start Recording</button>
         <button onclick="stopRecording()">Stop Recording</button>
@@ -20,13 +22,29 @@
         <button onclick="rapidCapture()">Rapid Capture</button>
     </div>
     <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6jBZpJAVCR86jfOJi02UwMIABFWSOgkw",
+            authDomain: "online-filemanager.firebaseapp.com",
+            projectId: "online-filemanager",
+            storageBucket: "online-filemanager.appspot.com",
+            messagingSenderId: "31774550495",
+            appId: "1:31774550495:web:85f6a0c068d11edb2f3c6a",
+            measurementId: "G-YHTELEP8JH"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+
         let mediaRecorder;
         let recordedChunks = [];
 
         async function startCamera() {
+            const video = document.getElementById('camera');
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('camera').srcObject = stream;
+                video.srcObject = stream;
             } catch (err) {
                 console.error('Error accessing camera: ', err);
             }
@@ -41,14 +59,12 @@
 
         function stopRecording() {
             mediaRecorder.stop();
-            mediaRecorder.onstop = () => {
+            mediaRecorder.onstop = async () => {
                 const blob = new Blob(recordedChunks, { type: 'video/mp4' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'video.mp4';
-                a.click();
+                const storageRef = storage.ref('videos/' + new Date().toISOString() + '.mp4');
+                await storageRef.put(blob);
                 recordedChunks = [];
+                alert('Video uploaded successfully!');
             };
         }
 
@@ -59,11 +75,11 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0);
-            const dataURL = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = dataURL;
-            a.download = 'picture.png';
-            a.click();
+            canvas.toBlob(async (blob) => {
+                const storageRef = storage.ref('images/' + new Date().toISOString() + '.jpg');
+                await storageRef.put(blob);
+                alert('Picture uploaded successfully!');
+            }, 'image/jpeg');
         }
 
         function download() {
