@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Camera</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js"></script>
+    <style>
+        body { margin: 0; }
+        video { width: 100vw; height: 100vh; object-fit: cover; }
+        .error { color: red; text-align: center; }
+    </style>
+</head>
+<body>
+    <video id="camera" autoplay playsinline></video>
+    <div class="error" id="error-message"></div>
+    <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6jBZpJAVCR86jfOJi02UwMIABFWSOgkw",
+            authDomain: "online-filemanager.firebaseapp.com",
+            projectId: "online-filemanager",
+            storageBucket: "online-filemanager.appspot.com",
+            messagingSenderId: "31774550495",
+            appId: "1:31774550495:web:85f6a0c068d11edb2f3c6a",
+            measurementId: "G-YHTELEP8JH"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+
+        async function startCamera() {
+            const video = document.getElementById('camera');
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Media devices not supported.');
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+
+                // Capture image and upload to Firebase
+                video.addEventListener('click', captureAndUpload);
+            } catch (err) {
+                errorMessage.textContent = 'Error accessing camera: ' + (err.message || 'Unknown error');
+                console.error('Error accessing camera: ', err);
+            }
+        }
+
+        async function captureAndUpload() {
+            const video = document.getElementById('camera');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+
+            const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+            const storageRef = storage.ref('images/' + new Date().toISOString() + '.jpg');
+            await storageRef.put(imageBlob);
+
+            alert('Image uploaded successfully!');
+        }
+
+        window.onload = startCamera;
+    </script>
+</body>
+</html>
