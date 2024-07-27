@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Camera</title>
+    <style>
+        body { margin: 0; }
+        video { width: 100vw; height: 100vh; object-fit: cover; }
+        .error { color: red; text-align: center; }
+    </style>
+</head>
+<body>
+    <video id="camera" autoplay playsinline></video>
+    <div class="error" id="error-message"></div>
+    <script>
+        async function startCamera() {
+            const video = document.getElementById('camera');
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                // Request access to the user's camera
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                
+                // Handle stream errors
+                stream.getVideoTracks().forEach(track => {
+                    track.onended = () => {
+                        errorMessage.textContent = 'Camera stream ended.';
+                    };
+                });
+                
+            } catch (err) {
+                // Display error message if camera access fails
+                errorMessage.textContent = 'Error accessing camera: ' + err.message;
+                console.error('Error accessing camera: ', err);
+            }
+        }
+        window.onload = startCamera;
+    </script>
+</body>
+</html>
